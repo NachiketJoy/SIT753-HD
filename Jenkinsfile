@@ -6,22 +6,18 @@ pipeline {
         DOCKER_TAG = "${BUILD_NUMBER}"
         SONAR_TOKEN = credentials('sonar-token')
         SNYK_TOKEN = credentials('snyk-token')
-
         DOCKER_REGISTRY = 'docker.io'
         DOCKER_NAMESPACE = 'njoy10'
-
         NOTIFICATION_EMAIL = 'njoyekurun@gmail.com'
     }
 
     stages {
+
         stage('Checkout') {
             steps {
                 checkout scm
                 script {
-                    env.GIT_COMMIT_SHORT = bat(
-                        script: 'git rev-parse --short HEAD',
-                        returnStdout: true
-                    ).trim()
+                    env.GIT_COMMIT_SHORT = bat(script: 'git rev-parse --short HEAD', returnStdout: true).trim()
                 }
             }
         }
@@ -31,9 +27,6 @@ pipeline {
                 echo 'Installing dependencies...'
                 bat 'npm ci'
                 echo 'Building the application...'
-                // Skip npm install --production on Windows to avoid EPERM
-                // bat 'npm run build'
-
                 script {
                     def artifactName = "calculator-api-${BUILD_NUMBER}.zip"
                     bat "powershell Compress-Archive -Path server.js,package.json,public -DestinationPath ${artifactName} -Force"
@@ -50,26 +43,23 @@ pipeline {
             }
         }
 
-        stage('Test') {
+        stage('Test & Coverage') {
             steps {
-                echo 'Running tests...'
+                echo 'Running tests with coverage...'
                 catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE') {
-                    bat 'npx jest --ci --reporters=default --reporters=jest-junit'
-                    bat 'npm run test:coverage'
+                    // Run tests once with coverage and junit reporter
+                    bat 'npx jest --ci --reporters=default --reporters=jest-junit --coverage --coverageReporters=cobertura'
                 }
             }
             post {
                 always {
-                    // Publish JUnit test results
+                    // JUnit test results
                     junit '**/test-results.xml'
-                    
-                    // Publish Cobertura coverage report
-                    cobertura coberturaReportFile: 'coverage/cobertura-coverage.xml', 
-                            autoUpdateHealth: false, 
-                            autoUpdateStability: false, 
-                            failNoReports: true, 
-                            failUnhealthy: false, 
-                            failUnstable: false
+                    // Cobertura coverage report
+                    cobertura coberturaReportFile: 'coverage/cobertura-coverage.xml',
+                             autoUpdateHealth: false,
+                             autoUpdateStability: false,
+                             failNoReports: true
                 }
             }
         }
@@ -98,7 +88,7 @@ pipeline {
                 catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE') {
                     echo 'Running security analysis...'
                     bat 'npm audit --audit-level moderate'
-                    bat 'npx snyk test --severity-threshold=high'
+                    bat "npx snyk test --severity-threshold=high --auth=${SNYK_TOKEN}"
                 }
             }
         }
@@ -106,7 +96,7 @@ pipeline {
         stage('Docker Build') {
             steps {
                 echo 'Building Docker image...'
-                bat "docker build -t ${DOCKER_IMAGE}:${DOCKER_TAG} ."
+                bat "docker build -t ${DOCKER_REGISTRY}/${DOCKER_NAMESPACE}/${DOCKER_IMAGE}:${DOCKER_TAG} ."
             }
         }
 
@@ -121,9 +111,7 @@ pipeline {
         }
 
         stage('Release to Production') {
-            when {
-                branch 'main'
-            }
+            when { branch 'main' }
             steps {
                 echo 'Releasing to production...'
                 bat 'docker-compose -f docker-compose.prod.yml down'
@@ -146,7 +134,6 @@ pipeline {
             echo 'Pipeline execution completed'
             cleanWs()
         }
-
         success {
             echo 'Pipeline succeeded!'
             script {
@@ -158,7 +145,6 @@ pipeline {
                 )
             }
         }
-
         failure {
             echo 'Pipeline failed!'
             script {
@@ -170,7 +156,6 @@ pipeline {
                 )
             }
         }
-
         unstable {
             echo 'Pipeline unstable!'
         }
