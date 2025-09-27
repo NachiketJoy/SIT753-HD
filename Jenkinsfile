@@ -45,10 +45,7 @@ pipeline {
         stage('Test & Coverage') {
             steps {
                 echo 'Running tests with coverage...'
-                catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE') {
-                    // Run tests once with coverage and junit reporter
-                    bat 'npx jest --ci --reporters=default --reporters=jest-junit --coverage --coverageReporters=cobertura --coverageReporters=html'
-                }
+                bat 'npx jest --ci --reporters=default --reporters=jest-junit --coverage --coverageReporters=cobertura --coverageReporters=html'
             }
             post {
                 always {
