@@ -1,20 +1,18 @@
 pipeline {
     agent any
-    
+
     environment {
         DOCKER_IMAGE = 'calculator-api'
         DOCKER_TAG = "${BUILD_NUMBER}"
         SONAR_TOKEN = credentials('sonar-token')
         SNYK_TOKEN = credentials('snyk-token')
-        
-        // For local development, you can leave this empty or use Docker Hub
+
         DOCKER_REGISTRY = 'docker.io'
         DOCKER_NAMESPACE = 'njoy10'
-        
-        // Email configuration - set your email here
-        NOTIFICATION_EMAIL = 'nachiket.joy@deakin.edu.au'
+
+        NOTIFICATION_EMAIL = 'njoyekurun@gmail.com'
     }
-    
+
     stages {
         stage('Checkout') {
             steps {
@@ -27,14 +25,14 @@ pipeline {
                 }
             }
         }
-        
-        stage('Build') {
+
+        stage('Install & Build') {
             steps {
-                echo 'Building the application...'
+                echo 'Installing dependencies...'
                 bat 'npm install'
+                echo 'Building the application...'
                 bat 'npm run build'
-                
-                // Create build artifact
+
                 script {
                     def artifactName = "calculator-api-${BUILD_NUMBER}.zip"
                     bat "powershell Compress-Archive -Path server.js,package.json,public -DestinationPath ${artifactName} -Force"
@@ -42,7 +40,14 @@ pipeline {
                 }
             }
         }
-        
+
+        stage('Lint') {
+            steps {
+                echo 'Running ESLint...'
+                bat 'npm run lint'
+            }
+        }
+
         stage('Test') {
             steps {
                 echo 'Running tests...'
@@ -51,14 +56,15 @@ pipeline {
             }
             post {
                 always {
-                    publishTestResults testResultsPattern: 'test-results.xml'
+                    // Requires jest-junit for XML output
+                    junit 'test-results.xml'
                     publishCoverage adapters: [
-                        jacocoAdapter('coverage/lcov.info')
+                        lcovAdapter('coverage/lcov.info')
                     ], sourceFileResolver: sourceFiles('STORE_LAST_BUILD')
                 }
             }
         }
-        
+
         stage('Code Quality') {
             steps {
                 echo 'Running SonarQube analysis...'
@@ -76,7 +82,7 @@ pipeline {
                 }
             }
         }
-        
+
         stage('Security') {
             steps {
                 echo 'Running security analysis...'
@@ -84,14 +90,14 @@ pipeline {
                 bat 'npx snyk test --severity-threshold=high'
             }
         }
-        
+
         stage('Docker Build') {
             steps {
                 echo 'Building Docker image...'
-                bat 'docker build -t ${DOCKER_IMAGE}:${DOCKER_TAG} .'
+                bat "docker build -t ${DOCKER_IMAGE}:${DOCKER_TAG} ."
             }
         }
-        
+
         stage('Deploy to Test') {
             steps {
                 echo 'Deploying to test environment...'
@@ -101,7 +107,7 @@ pipeline {
                 bat 'powershell -Command "try { Invoke-WebRequest -Uri http://localhost:5050/health -UseBasicParsing | Out-Null; exit 0 } catch { exit 1 }"'
             }
         }
-        
+
         stage('Release to Production') {
             when {
                 branch 'main'
@@ -114,7 +120,7 @@ pipeline {
                 bat 'powershell -Command "try { Invoke-WebRequest -Uri http://localhost/health -UseBasicParsing | Out-Null; exit 0 } catch { exit 1 }"'
             }
         }
-        
+
         stage('Monitoring Setup') {
             steps {
                 echo 'Setting up monitoring...'
@@ -122,16 +128,15 @@ pipeline {
             }
         }
     }
-    
+
     post {
         always {
             echo 'Pipeline execution completed'
             cleanWs()
         }
-        
+
         success {
             echo 'Pipeline succeeded!'
-            // Send success notification
             script {
                 def emailTo = env.CHANGE_AUTHOR_EMAIL ?: env.NOTIFICATION_EMAIL
                 emailext (
@@ -141,10 +146,9 @@ pipeline {
                 )
             }
         }
-        
+
         failure {
             echo 'Pipeline failed!'
-            // Send failure notification
             script {
                 def emailTo = env.CHANGE_AUTHOR_EMAIL ?: env.NOTIFICATION_EMAIL
                 emailext (
@@ -154,7 +158,7 @@ pipeline {
                 )
             }
         }
-        
+
         unstable {
             echo 'Pipeline unstable!'
         }

@@ -1,6 +1,6 @@
 services:
   web:
-    build: .
+    image: ${DOCKER_IMAGE}:${DOCKER_TAG}
     ports:
       - "5050:3000"
     environment:
