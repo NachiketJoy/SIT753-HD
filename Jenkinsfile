@@ -29,7 +29,7 @@ pipeline {
         stage('Install & Build') {
             steps {
                 echo 'Installing dependencies...'
-                bat 'npm install'
+                bat 'npm ci'
                 echo 'Building the application...'
                 bat 'npm run build'
 
@@ -43,8 +43,9 @@ pipeline {
 
         stage('Lint') {
             steps {
-                echo 'Running ESLint...'
-                bat 'npm run lint'
+                catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE') {
+                    bat 'node_modules\\.bin\\eslint .'
+                }
                 // bat 'npx eslint .'
             }
         }
@@ -52,7 +53,8 @@ pipeline {
         stage('Test') {
             steps {
                 echo 'Running tests...'
-                bat 'npm test'
+                // bat 'npm test'
+                bat 'node_modules\\.bin\\jest --ci --reporters=default --reporters=jest-junit'
                 bat 'npm run test:coverage'
             }
             post {
