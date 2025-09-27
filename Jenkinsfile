@@ -60,11 +60,16 @@ pipeline {
             }
             post {
                 always {
-                    // Use wildcard in case path varies
+                    // Publish JUnit test results
                     junit '**/test-results.xml'
-                    publishCoverage adapters: [
-                        lcovAdapter('coverage/lcov.info')
-                    ], sourceFileResolver: sourceFiles('STORE_LAST_BUILD')
+                    
+                    // Publish Cobertura coverage report
+                    cobertura coberturaReportFile: 'coverage/cobertura-coverage.xml', 
+                            autoUpdateHealth: false, 
+                            autoUpdateStability: false, 
+                            failNoReports: true, 
+                            failUnhealthy: false, 
+                            failUnstable: false
                 }
             }
         }

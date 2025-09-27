@@ -7,7 +7,7 @@
     "dev": "nodemon server.js",
     "test": "jest --ci --reporters=default --reporters=jest-junit",
     "test:watch": "jest --watch",
-    "test:coverage": "jest --coverage",
+    "test:coverage": "jest --coverage --coverageReporters=cobertura",
     "build": "npm install --production",
     "lint": "npx eslint . --config eslint.config.cjs",
     "lint:fix": "npx eslint . --fix --config eslint.config.cjs",
