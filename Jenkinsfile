@@ -12,7 +12,6 @@ pipeline {
     }
 
     stages {
-
         stage('Checkout') {
             steps {
                 checkout scm
@@ -53,13 +52,23 @@ pipeline {
             }
             post {
                 always {
-                    // JUnit test results
-                    junit '**/test-results.xml'
-                    // Cobertura coverage report
-                    cobertura coberturaReportFile: 'coverage/cobertura-coverage.xml',
-                             autoUpdateHealth: false,
-                             autoUpdateStability: false,
-                             failNoReports: true
+                    // Publish test results
+                    junit 'junit.xml'
+
+                    // Publish coverage using Coverage plugin
+                    publishCoverage adapters: [
+                coberturaAdapter('coverage/cobertura-coverage.xml')
+            ], sourceFileResolver: sourceFiles('STORE_LAST_BUILD')
+
+                    // Publish HTML coverage report
+                    publishHTML([
+                allowMissing: false,
+                alwaysLinkToLastBuild: true,
+                keepAll: true,
+                reportDir: 'coverage/lcov-report',
+                reportFiles: 'index.html',
+                reportName: 'Coverage Report'
+            ])
                 }
             }
         }
@@ -71,12 +80,12 @@ pipeline {
                     def scannerHome = tool 'SonarQubeScanner'
                     withSonarQubeEnv('SonarQube') {
                         bat "${scannerHome}\\bin\\sonar-scanner.bat " +
-                            "-Dsonar.projectKey=calculator-api " +
+                            '-Dsonar.projectKey=calculator-api ' +
                             "-Dsonar.projectVersion=${BUILD_NUMBER} " +
-                            "-Dsonar.sources=. " +
-                            "-Dsonar.exclusions=node_modules/**,coverage/**,tests/** " +
-                            "-Dsonar.tests=tests " +
-                            "-Dsonar.javascript.lcov.reportPaths=coverage/lcov.info " +
+                            '-Dsonar.sources=. ' +
+                            '-Dsonar.exclusions=node_modules/**,coverage/**,tests/** ' +
+                            '-Dsonar.tests=tests ' +
+                            '-Dsonar.javascript.lcov.reportPaths=coverage/lcov.info ' +
                             "-Dsonar.login=${SONAR_TOKEN}"
                     }
                 }
@@ -138,7 +147,7 @@ pipeline {
             echo 'Pipeline succeeded!'
             script {
                 def emailTo = env.CHANGE_AUTHOR_EMAIL ?: env.NOTIFICATION_EMAIL
-                emailext (
+                emailext(
                     subject: "✅ Build Success: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
                     body: "Build ${env.BUILD_NUMBER} completed successfully.\nCommit: ${env.GIT_COMMIT_SHORT}",
                     to: emailTo
@@ -149,7 +158,7 @@ pipeline {
             echo 'Pipeline failed!'
             script {
                 def emailTo = env.CHANGE_AUTHOR_EMAIL ?: env.NOTIFICATION_EMAIL
-                emailext (
+                emailext(
                     subject: "❌ Build Failed: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
                     body: "Build ${env.BUILD_NUMBER} failed. Please check the logs.\nCommit: ${env.GIT_COMMIT_SHORT}",
                     to: emailTo
