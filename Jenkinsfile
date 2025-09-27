@@ -44,22 +44,21 @@ pipeline {
         stage('Lint') {
             steps {
                 catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE') {
-                    bat 'node_modules\\.bin\\eslint .'
+                    bat 'npx eslint .'
                 }
-                // bat 'npx eslint .'
             }
         }
 
         stage('Test') {
             steps {
                 echo 'Running tests...'
-                // bat 'npm test'
-                bat 'node_modules\\.bin\\jest --ci --reporters=default --reporters=jest-junit'
-                bat 'npm run test:coverage'
+                catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE') {
+                    bat 'npx jest --ci --reporters=default --reporters=jest-junit'
+                    bat 'npm run test:coverage'
+                }
             }
             post {
                 always {
-                    // Requires jest-junit for XML output
                     junit 'test-results.xml'
                     publishCoverage adapters: [
                         lcovAdapter('coverage/lcov.info')
@@ -76,6 +75,7 @@ pipeline {
                     withSonarQubeEnv('SonarQube') {
                         bat "${scannerHome}\\bin\\sonar-scanner.bat " +
                             "-Dsonar.projectKey=calculator-api " +
+                            "-Dsonar.projectVersion=${BUILD_NUMBER} " +
                             "-Dsonar.sources=. " +
                             "-Dsonar.exclusions=node_modules/**,coverage/**,tests/** " +
                             "-Dsonar.tests=tests " +
@@ -88,9 +88,11 @@ pipeline {
 
         stage('Security') {
             steps {
-                echo 'Running security analysis...'
-                bat 'npm audit --audit-level moderate'
-                bat 'npx snyk test --severity-threshold=high'
+                catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE') {
+                    echo 'Running security analysis...'
+                    bat 'npm audit --audit-level moderate'
+                    bat 'npx snyk test --severity-threshold=high'
+                }
             }
         }
 
@@ -143,8 +145,8 @@ pipeline {
             script {
                 def emailTo = env.CHANGE_AUTHOR_EMAIL ?: env.NOTIFICATION_EMAIL
                 emailext (
-                    subject: "Build Success: ${env.JOB_NAME} - ${env.BUILD_NUMBER}",
-                    body: "Build ${env.BUILD_NUMBER} completed successfully.",
+                    subject: "✅ Build Success: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
+                    body: "Build ${env.BUILD_NUMBER} completed successfully.\nCommit: ${env.GIT_COMMIT_SHORT}",
                     to: emailTo
                 )
             }
@@ -155,8 +157,8 @@ pipeline {
             script {
                 def emailTo = env.CHANGE_AUTHOR_EMAIL ?: env.NOTIFICATION_EMAIL
                 emailext (
-                    subject: "Build Failed: ${env.JOB_NAME} - ${env.BUILD_NUMBER}",
-                    body: "Build ${env.BUILD_NUMBER} failed. Please check the logs.",
+                    subject: "❌ Build Failed: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
+                    body: "Build ${env.BUILD_NUMBER} failed. Please check the logs.\nCommit: ${env.GIT_COMMIT_SHORT}",
                     to: emailTo
                 )
             }
