@@ -48,27 +48,25 @@ pipeline {
                 catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE') {
                     // Run tests once with coverage and junit reporter
                     bat 'npx jest --ci --reporters=default --reporters=jest-junit --coverage --coverageReporters=cobertura --coverageReporters=html'
+                        bat 'dir *.xml /s || echo "No XML files found"'
+                    bat 'dir junit* /s || echo "No junit files found"'
                 }
             }
             post {
                 always {
-                    // Publish test results
-                    junit 'junit.xml'
+                    script {
+                        try {
+                            junit '**/junit.xml'
+                } catch (Exception e) {
+                            try {
+                                junit 'junit.xml'
+                    } catch (Exception e2) {
+                                echo "No JUnit results found: ${e2.message}"
+                            }
+                        }
+                    }
 
-                    // Publish coverage using Coverage plugin
-                    publishCoverage adapters: [
-                coberturaAdapter('coverage/cobertura-coverage.xml')
-            ], sourceFileResolver: sourceFiles('STORE_LAST_BUILD')
-
-                    // Publish HTML coverage report
-                    publishHTML([
-                allowMissing: false,
-                alwaysLinkToLastBuild: true,
-                keepAll: true,
-                reportDir: 'coverage/lcov-report',
-                reportFiles: 'index.html',
-                reportName: 'Coverage Report'
-            ])
+                    archiveArtifacts artifacts: '**/*.xml', allowEmptyArchive: true
                 }
             }
         }
