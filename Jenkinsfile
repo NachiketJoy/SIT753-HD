@@ -9,6 +9,7 @@ pipeline {
         DOCKER_REGISTRY = 'docker.io'
         DOCKER_NAMESPACE = 'njoy10'
         NOTIFICATION_EMAIL = 'njoyekurun@gmail.com'
+        SCANNER_HOME = tool 'SonarQube Scanner'
     }
 
     stages {
@@ -69,18 +70,8 @@ pipeline {
             steps {
                 echo 'Running SonarQube analysis...'
                 catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE') {
-                    script {
-                        def scannerHome = tool 'SonarQubeScanner'
-                        withSonarQubeEnv('SonarQube') {
-                            bat "${scannerHome}\\bin\\sonar-scanner.bat " +
-                            '-Dsonar.projectKey=calculator-api ' +
-                            "-Dsonar.projectVersion=${BUILD_NUMBER} " +
-                            '-Dsonar.sources=. ' +
-                            '-Dsonar.exclusions=node_modules/**,coverage/**,tests/** ' +
-                            '-Dsonar.tests=tests ' +
-                            '-Dsonar.javascript.lcov.reportPaths=coverage/lcov.info ' +
-                            "-Dsonar.login=${SONAR_TOKEN}"
-                        }
+                    withSonarQubeEnv('Local SonarQube') {
+                        bat "${SCANNER_HOME}/bin/sonar-scanner"
                     }
                 }
             }
