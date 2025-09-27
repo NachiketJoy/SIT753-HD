@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculator API Frontend</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .calculator-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            background-color: #fafafa;
+        }
+        .calculator-section h3 {
+            margin-top: 0;
+            color: #555;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #333;
+        }
+        input[type="number"] {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-right: 10px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .result {
+            margin-top: 15px;
+            padding: 15px;
+            background-color: #e8f5e8;
+            border: 1px solid #4caf50;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+        .error {
+            background-color: #ffeaea;
+            border-color: #f44336;
+            color: #d32f2f;
+        }
+        .health-status {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 10px 15px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: bold;
+        }
+        .healthy {
+            background-color: #4caf50;
+            color: white;
+        }
+        .unhealthy {
+            background-color: #f44336;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="health-status" id="healthStatus">Checking...</div>
+    
+    <div class="container">
+        <h1>Calculator API Frontend</h1>
+        
+        <div class="calculator-section">
+            <h3>Exponentiation Calculator</h3>
+            <div class="form-group">
+                <label for="expBase">Base Number:</label>
+                <input type="number" id="expBase" placeholder="Enter base number">
+            </div>
+            <div class="form-group">
+                <label for="expExponent">Exponent:</label>
+                <input type="number" id="expExponent" placeholder="Enter exponent">
+            </div>
+            <button onclick="calculateExponentiation()">Calculate Exponentiation</button>
+            <div id="expResult" class="result" style="display: none;"></div>
+        </div>
+
+        <div class="calculator-section">
+            <h3>Modulo Calculator</h3>
+            <div class="form-group">
+                <label for="modDividend">Dividend:</label>
+                <input type="number" id="modDividend" placeholder="Enter dividend">
+            </div>
+            <div class="form-group">
+                <label for="modDivisor">Divisor:</label>
+                <input type="number" id="modDivisor" placeholder="Enter divisor">
+            </div>
+            <button onclick="calculateModulo()">Calculate Modulo</button>
+            <div id="modResult" class="result" style="display: none;"></div>
+        </div>
+
+        <div class="calculator-section">
+            <h3>Generic Operation</h3>
+            <div class="form-group">
+                <label for="genNum1">Number 1:</label>
+                <input type="number" id="genNum1" placeholder="Enter first number">
+            </div>
+            <div class="form-group">
+                <label for="genNum2">Number 2:</label>
+                <input type="number" id="genNum2" placeholder="Enter second number">
+            </div>
+            <div class="form-group">
+                <label for="genOperation">Operation:</label>
+                <select id="genOperation" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 16px;">
+                    <option value="exponentiate">Exponentiate</option>
+                    <option value="mod">Modulo</option>
+                </select>
+            </div>
+            <button onclick="calculateGeneric()">Calculate</button>
+            <div id="genResult" class="result" style="display: none;"></div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = window.location.origin;
+
+        // Check health status
+        async function checkHealth() {
+            try {
+                const response = await fetch(`${API_BASE}/health`);
+                const data = await response.json();
+                const statusEl = document.getElementById('healthStatus');
+                if (data.status === 'healthy') {
+                    statusEl.textContent = 'API Healthy';
+                    statusEl.className = 'health-status healthy';
+                } else {
+                    statusEl.textContent = 'API Unhealthy';
+                    statusEl.className = 'health-status unhealthy';
+                }
+            } catch (error) {
+                const statusEl = document.getElementById('healthStatus');
+                statusEl.textContent = 'API Unhealthy';
+                statusEl.className = 'health-status unhealthy';
+            }
+        }
+
+        // Exponentiation calculation
+        async function calculateExponentiation() {
+            const base = document.getElementById('expBase').value;
+            const exponent = document.getElementById('expExponent').value;
+            const resultEl = document.getElementById('expResult');
+
+            if (!base || !exponent) {
+                showError(resultEl, 'Please enter both base and exponent');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/exponentiate`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        num1: parseFloat(base),
+                        num2: parseFloat(exponent)
+                    })
+                });
+
+                const data = await response.json();
+                
+                if (response.ok) {
+                    showResult(resultEl, `${data.num1}^${data.num2} = ${data.result}`);
+                } else {
+                    showError(resultEl, data.error || 'Calculation failed');
+                }
+            } catch (error) {
+                showError(resultEl, 'Network error: ' + error.message);
+            }
+        }
+
+        // Modulo calculation
+        async function calculateModulo() {
+            const dividend = document.getElementById('modDividend').value;
+            const divisor = document.getElementById('modDivisor').value;
+            const resultEl = document.getElementById('modResult');
+
+            if (!dividend || !divisor) {
+                showError(resultEl, 'Please enter both dividend and divisor');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/modulo`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        num1: parseFloat(dividend),
+                        num2: parseFloat(divisor)
+                    })
+                });
+
+                const data = await response.json();
+                
+                if (response.ok) {
+                    showResult(resultEl, `${data.num1} mod ${data.num2} = ${data.result}`);
+                } else {
+                    showError(resultEl, data.error || 'Calculation failed');
+                }
+            } catch (error) {
+                showError(resultEl, 'Network error: ' + error.message);
+            }
+        }
+
+        // Generic operation calculation
+        async function calculateGeneric() {
+            const num1 = document.getElementById('genNum1').value;
+            const num2 = document.getElementById('genNum2').value;
+            const operation = document.getElementById('genOperation').value;
+            const resultEl = document.getElementById('genResult');
+
+            if (!num1 || !num2) {
+                showError(resultEl, 'Please enter both numbers');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        num1: parseFloat(num1),
+                        num2: parseFloat(num2),
+                        operation: operation
+                    })
+                });
+
+                const data = await response.json();
+                
+                if (response.ok) {
+                    const operationText = operation === 'exponentiate' ? '^' : 'mod';
+                    showResult(resultEl, `${data.num1} ${operationText} ${data.num2} = ${data.result}`);
+                } else {
+                    showError(resultEl, data.error || 'Calculation failed');
+                }
+            } catch (error) {
+                showError(resultEl, 'Network error: ' + error.message);
+            }
+        }
+
+        function showResult(element, message) {
+            element.textContent = message;
+            element.className = 'result';
+            element.style.display = 'block';
+        }
+
+        function showError(element, message) {
+            element.textContent = message;
+            element.className = 'result error';
+            element.style.display = 'block';
+        }
+
+        // Check health on page load
+        checkHealth();
+        setInterval(checkHealth, 30000); // Check every 30 seconds
+    </script>
+</body>
+</html>

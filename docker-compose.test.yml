@@ -1,0 +1,21 @@
+services:
+  web:
+    build: .
+    ports:
+      - "5050:3000"
+    environment:
+      - NODE_ENV=test
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
+    restart: "no"
+    container_name: calculator-api-test
+    networks:
+      - test-network
+
+networks:
+  test-network:
+    driver: bridge

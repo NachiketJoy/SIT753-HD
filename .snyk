@@ -1,0 +1,14 @@
+# Snyk (https://snyk.io) policy file, patches or ignores known vulnerabilities.
+version: v1.25.0
+
+# Ignore specific vulnerabilities (add as needed)
+# ignore:
+#   SNYK-JS-EXPRESS-1234567:
+#     - express:
+#         reason: False positive, not exploitable in our use case
+#         expires: '2024-12-31T23:59:59.999Z'
+
+# Patch specific vulnerabilities (add as needed)
+# patch:
+#   SNYK-JS-EXPRESS-1234567:
+#     - express: '>=4.0.0 <4.17.0'
