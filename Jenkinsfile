@@ -61,7 +61,7 @@ pipeline {
           // record coverage using Code Coverage API (recommended)
           // This requires the "Code Coverage API" / "Coverage" plugin installed.
           // If your Jenkins has recordCoverage available (your logs hinted it does), this will work:
-          recordCoverage tools: [cobertura('coverage/cobertura-coverage.xml')], failNoReports: false
+          recordCoverage tools: [cobertura('coverage/cobertura-coverage.xml')], failOnError: false
 
           // Also publish HTML coverage report (requires HTML Publisher plugin)
           publishHTML (target: [
