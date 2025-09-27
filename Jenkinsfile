@@ -44,8 +44,8 @@ pipeline {
         stage('Lint') {
             steps {
                 echo 'Running ESLint...'
-                // bat 'npm run lint'
-                bat 'npx eslint .'
+                bat 'npm run lint'
+                // bat 'npx eslint .'
             }
         }
 
