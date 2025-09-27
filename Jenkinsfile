@@ -10,6 +10,9 @@ pipeline {
         // For local development, you can leave this empty or use Docker Hub
         DOCKER_REGISTRY = 'docker.io'
         DOCKER_NAMESPACE = 'njoy10'
+        
+        // Email configuration - set your email here
+        NOTIFICATION_EMAIL = 'nachiket.joy@deakin.edu.au'
     }
     
     stages {
@@ -32,8 +35,11 @@ pipeline {
                 bat 'npm run build'
                 
                 // Create build artifact
-                bat 'powershell Compress-Archive -Path server.js,package.json,public -DestinationPath calculator-api-${BUILD_NUMBER}.zip -Force'
-                archiveArtifacts artifacts: 'calculator-api-${BUILD_NUMBER}.zip', fingerprint: true
+                script {
+                    def artifactName = "calculator-api-${BUILD_NUMBER}.zip"
+                    bat "powershell Compress-Archive -Path server.js,package.json,public -DestinationPath ${artifactName} -Force"
+                    archiveArtifacts artifacts: artifactName, fingerprint: true
+                }
             }
         }
         
@@ -126,21 +132,27 @@ pipeline {
         success {
             echo 'Pipeline succeeded!'
             // Send success notification
-            emailext (
-                subject: "Build Success: ${env.JOB_NAME} - ${env.BUILD_NUMBER}",
-                body: "Build ${env.BUILD_NUMBER} completed successfully.",
-                to: "${env.CHANGE_AUTHOR_EMAIL}"
-            )
+            script {
+                def emailTo = env.CHANGE_AUTHOR_EMAIL ?: env.NOTIFICATION_EMAIL
+                emailext (
+                    subject: "Build Success: ${env.JOB_NAME} - ${env.BUILD_NUMBER}",
+                    body: "Build ${env.BUILD_NUMBER} completed successfully.",
+                    to: emailTo
+                )
+            }
         }
         
         failure {
             echo 'Pipeline failed!'
             // Send failure notification
-            emailext (
-                subject: "Build Failed: ${env.JOB_NAME} - ${env.BUILD_NUMBER}",
-                body: "Build ${env.BUILD_NUMBER} failed. Please check the logs.",
-                to: "${env.CHANGE_AUTHOR_EMAIL}"
-            )
+            script {
+                def emailTo = env.CHANGE_AUTHOR_EMAIL ?: env.NOTIFICATION_EMAIL
+                emailext (
+                    subject: "Build Failed: ${env.JOB_NAME} - ${env.BUILD_NUMBER}",
+                    body: "Build ${env.BUILD_NUMBER} failed. Please check the logs.",
+                    to: emailTo
+                )
+            }
         }
         
         unstable {
