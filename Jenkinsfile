@@ -94,33 +94,33 @@ pipeline {
             }
         }
 
-        stage('Deploy to Test') {
-            steps {
-                echo 'Deploying to test environment...'
-                bat 'docker-compose -f docker-compose.test.yml down'
-                bat 'docker-compose -f docker-compose.test.yml up -d'
-                bat 'timeout /t 30 /nobreak'
-                bat 'powershell -Command "try { Invoke-WebRequest -Uri http://localhost:5050/health -UseBasicParsing | Out-Null; exit 0 } catch { exit 1 }"'
-            }
-        }
+        // stage('Deploy to Test') {
+        //     steps {
+        //         echo 'Deploying to test environment...'
+        //         bat 'docker-compose -f docker-compose.test.yml down'
+        //         bat 'docker-compose -f docker-compose.test.yml up -d'
+        //         bat 'timeout /t 30 /nobreak'
+        //         bat 'powershell -Command "try { Invoke-WebRequest -Uri http://localhost:5050/health -UseBasicParsing | Out-Null; exit 0 } catch { exit 1 }"'
+        //     }
+        // }
 
-        stage('Release to Production') {
-            when { branch 'main' }
-            steps {
-                echo 'Releasing to production...'
-                bat 'docker-compose -f docker-compose.prod.yml down'
-                bat 'docker-compose -f docker-compose.prod.yml up -d'
-                bat 'timeout /t 30 /nobreak'
-                bat 'powershell -Command "try { Invoke-WebRequest -Uri http://localhost/health -UseBasicParsing | Out-Null; exit 0 } catch { exit 1 }"'
-            }
-        }
+        // stage('Release to Production') {
+        //     when { branch 'main' }
+        //     steps {
+        //         echo 'Releasing to production...'
+        //         bat 'docker-compose -f docker-compose.prod.yml down'
+        //         bat 'docker-compose -f docker-compose.prod.yml up -d'
+        //         bat 'timeout /t 30 /nobreak'
+        //         bat 'powershell -Command "try { Invoke-WebRequest -Uri http://localhost/health -UseBasicParsing | Out-Null; exit 0 } catch { exit 1 }"'
+        //     }
+        // }
 
-        stage('Monitoring Setup') {
-            steps {
-                echo 'Setting up monitoring...'
-                bat 'docker-compose up -d prometheus grafana sonarqube'
-            }
-        }
+        // stage('Monitoring Setup') {
+        //     steps {
+        //         echo 'Setting up monitoring...'
+        //         bat 'docker-compose up -d prometheus grafana sonarqube'
+        //     }
+        // }
     }
 
     post {
