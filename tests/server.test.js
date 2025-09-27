@@ -36,7 +36,7 @@ const operations = {
   mod: (num1, num2) => num1 % num2
 };
 
-app.post("/", (req, res) => {
+app.post('/', (req, res) => {
   const { num1, num2, operation } = req.body;
   const n1 = Number(num1);
   const n2 = Number(num2);
