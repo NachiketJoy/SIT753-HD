@@ -51,10 +51,8 @@ pipeline {
                 always {
                     junit 'test-results.xml'
 
-                    // Archive coverage files
                     archiveArtifacts artifacts: 'coverage/**/*', allowEmptyArchive: true
 
-                    // Optional: Publish HTML coverage report
                     publishHTML([
                 allowMissing: false,
                 alwaysLinkToLastBuild: true,
@@ -70,10 +68,11 @@ pipeline {
         stage('Code Quality') {
             steps {
                 echo 'Running SonarQube analysis...'
-                script {
-                    def scannerHome = tool 'SonarQubeScanner'
-                    withSonarQubeEnv('SonarQube') {
-                        bat "${scannerHome}\\bin\\sonar-scanner.bat " +
+                catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE') {
+                    script {
+                        def scannerHome = tool 'SonarQubeScanner'
+                        withSonarQubeEnv('SonarQube') {
+                            bat "${scannerHome}\\bin\\sonar-scanner.bat " +
                             '-Dsonar.projectKey=calculator-api ' +
                             "-Dsonar.projectVersion=${BUILD_NUMBER} " +
                             '-Dsonar.sources=. ' +
@@ -81,6 +80,7 @@ pipeline {
                             '-Dsonar.tests=tests ' +
                             '-Dsonar.javascript.lcov.reportPaths=coverage/lcov.info ' +
                             "-Dsonar.login=${SONAR_TOKEN}"
+                        }
                     }
                 }
             }
