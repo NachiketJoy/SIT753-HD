@@ -1,7 +1,7 @@
 # Calculator API - DevOps Pipeline Project
 
 ## Overview
-A comprehensive Node.js calculator API with a complete DevOps pipeline including Jenkins CI/CD, testing, code quality analysis, security scanning, monitoring, and deployment automation.
+A Node.js calculator API with a complete DevOps pipeline including Jenkins CI/CD, testing, code quality analysis, security scanning, monitoring, and deployment automation.
 
 ## Features
 - **RESTful API** with exponentiation and modulo operations
@@ -65,19 +65,9 @@ open http://localhost:3000
 
 ### Docker Deployment
 
-#### Windows
 ```cmd
 # Using batch script
 setup.bat
-
-# Or manually
-docker-compose up -d
-```
-
-#### Linux/macOS
-```bash
-# Using shell script
-./setup.sh
 
 # Or manually
 docker-compose up -d
@@ -107,7 +97,7 @@ docker-compose up -d
 - **Testing**: Jest with coverage reporting
 - **Code Quality**: SonarQube with quality gates
 - **Security**: Snyk (dependencies) + Trivy (Docker images)
-- **Monitoring**: Prometheus + Grafana + Node Exporter
+- **Monitoring**: Prometheus + Grafana
 - **Deployment**: Docker Compose for multi-environment
 
 ## Project Structure
@@ -142,24 +132,15 @@ docker-compose up -d
 - Application performance metrics
 - System resource utilization
 - Error rates and response times
-- Business metrics (calculations performed)
 
-### Alerts
-- High error rates
-- Memory usage thresholds
-- Service availability
-- Performance degradation
 
 ## Security Features
 - Dependency vulnerability scanning
 - Docker image security analysis
 - Code quality and security rules
-- Automated security policy enforcement
 
 ## Environment Configuration
 
-### Windows
-
 #### Development
 ```cmd
 docker-compose up -d
@@ -174,30 +155,3 @@ docker-compose -f docker-compose.test.yml up -d
 ```cmd
 docker-compose -f docker-compose.prod.yml up -d
 ```
-
-### Linux/macOS
-
-#### Development
-```bash
-docker-compose up -d
-```
-
-#### Testing
-```bash
-docker-compose -f docker-compose.test.yml up -d
-```
-
-#### Production
-```bash
-docker-compose -f docker-compose.prod.yml up -d
-```
-
-## Contributing
-1. Fork the repository
-2. Create a feature branch
-3. Make changes with tests
-4. Ensure all pipeline stages pass
-5. Submit a pull request
-
-## License
-ISC License
