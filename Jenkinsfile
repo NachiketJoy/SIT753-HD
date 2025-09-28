@@ -66,13 +66,6 @@ pipeline {
             }
         }
 
-        stage('Monitoring Setup') {
-            steps {
-                echo 'Setting up monitoring...'
-                bat 'docker-compose up -d prometheus grafana sonarqube'
-            }
-        }
-
         stage('Code Quality') {
             steps {
                 echo 'Running SonarQube analysis...'
@@ -119,6 +112,13 @@ pipeline {
         //         bat 'docker-compose -f docker-compose.prod.yml up -d'
         //         bat 'timeout /t 30 /nobreak'
         //         bat 'powershell -Command "try { Invoke-WebRequest -Uri http://localhost/health -UseBasicParsing | Out-Null; exit 0 } catch { exit 1 }"'
+        //     }
+        // }
+
+        // stage('Monitoring Setup') {
+        //     steps {
+        //         echo 'Setting up monitoring...'
+        //         bat 'docker-compose up -d prometheus grafana sonarqube'
         //     }
         // }
     }
