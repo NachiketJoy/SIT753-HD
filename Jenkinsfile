@@ -115,12 +115,12 @@ pipeline {
         //     }
         // }
 
-        // stage('Monitoring Setup') {
-        //     steps {
-        //         echo 'Setting up monitoring...'
-        //         bat 'docker-compose up -d prometheus grafana sonarqube'
-        //     }
-        // }
+        stage('Monitoring Setup') {
+            steps {
+                echo 'Setting up monitoring...'
+                bat 'docker-compose up -d prometheus grafana'
+            }
+        }
     }
 
     post {
